@@ -1,4 +1,5 @@
 goog.require('goog.testing.jsunit');
+goog.require('goog.structs.Map');
 
 function testGenerate() {
     var router = new fos.Router({base_url: ''}, {
@@ -326,7 +327,7 @@ function testGetBaseUrl() {
 }
 
 function testGeti18n() {
-    var router = new fos.Router({base_url: '/foo', prefix: 'en__RG__'}, {
+    var router = new fos.Router({base_url: '/foo', prefix: 'en__RG__', locale: 'en'}, {
         en__RG__homepage: {
             tokens: [['text', '/bar']],
             defaults: {},
@@ -344,14 +345,29 @@ function testGeti18n() {
             defaults: {},
             requirements: {},
             hosttokens: []
+        },
+        "login.en": {
+            tokens: [['text', '/en/login']],
+            defaults: {},
+            requirements: {},
+            hosttokens: []
+        },
+        "login.es": {
+            tokens: [['text', '/es/login']],
+            defaults: {},
+            requirements: {},
+            hosttokens: []
         }
     });
 
     assertEquals('/foo/bar', router.generate('homepage'));
     assertEquals('/foo/admin', router.generate('_admin'));
+    assertEquals('/foo/en/login', router.generate('login'));
 
     router.setPrefix('es__RG__');
+    router.setLocale('es');
     assertEquals('/foo/es/bar', router.generate('homepage'));
+    assertEquals('/foo/es/login', router.generate('login'));
 }
 
 function testGetRoute() {
@@ -386,7 +402,7 @@ function testGetRoutes() {
         blog: 'test'
     });
 
-    assertObjectEquals(expected, router.getRoutes());
+    assertObjectEquals(expected.toObject(), router.getRoutes());
 }
 
 function testGenerateWithNullValue() {
@@ -404,4 +420,20 @@ function testGenerateWithNullValue() {
     });
 
     assertEquals('/blog-post//10', router.generate('posts', { page: null, id: 10 }));
+}
+
+function testGenerateWithPort() {
+  var router = new fos.Router({base_url: '/foo', host: "localhost", scheme: "http", port: 443}, {
+    homepage: {
+      tokens: [['text', '/bar']],
+      defaults: {subdomain: 'api'},
+      requirements: {},
+      hosttokens: [
+        ['text', '.localhost'],
+        ['variable', '', '', 'subdomain']
+      ]
+    }
+  });
+
+  assertEquals('http://api.localhost:443/foo/bar', router.generate('homepage'));
 }

@@ -1,13 +1,13 @@
 Usage
 =====
 
-Add these two lines in your layout:
+In applications not using webpack add these two lines in your layout:
 
 .. configuration-block::
 
     .. code-block:: html+twig
 
-        <script src="{{ asset('bundles/fosjsrouting/js/router.js') }}"></script>
+        <script src="{{ asset('bundles/fosjsrouting/js/router.min.js') }}"></script>
         <script src="{{ path('fos_js_routing_js', { callback: 'fos.Router.setData' }) }}"></script>
 
     .. code-block:: html+php
@@ -17,8 +17,36 @@ Add these two lines in your layout:
 
 .. note::
 
-    If you are not using Twig, then it is no problem. What you need is to add
+    If you are not using Twig, then it is no problem. What you need is
     the two JavaScript files above loaded at some point in your web page.
+
+
+If you are using webpack and Encore to package your assets you will need to use the dump command
+and export your routes to json, this command will create a json file into the ``web/js`` folder:
+
+.. code-block:: bash
+
+    # Symfony 3
+    bin/console fos:js-routing:dump --format=json
+
+If you are using Flex, probably you want to dump your routes into the ``public`` folder
+instead of ``web``, to achieve this you can set the ``target`` parameter:
+
+.. code-block:: bash
+
+    # Symfony Flex
+    bin/console fos:js-routing:dump --format=json --target=public/js/fos_js_routes.json
+
+Then within your JavaScript development you can use:
+
+.. code-block:: javascript
+
+    const routes = require('../../public/js/fos_js_routes.json');
+    import Routing from '../../vendor/friendsofsymfony/jsrouting-bundle/Resources/public/js/router.min.js';
+
+    Routing.setRoutingData(routes);
+    Routing.generate('rep_log_list');
+
 
 Generating URIs
 ---------------
@@ -112,6 +140,24 @@ Moreover, you can configure a list of routes to expose in ``app/config/config.ym
 These routes will be added to the exposed routes. You can use regular expression
 patterns if you don't want to list all your routes name by name.
 
+.. note::
+
+    If you're using `JMSI18nRoutingBundle`_ for your internationalized routes, your exposed routes must now match the bundle locale-prefixed routes, so you could either specify each locale by hand in the routes names, or use a regular expression to match all of your locales at once:
+
+.. code-block:: yaml
+
+    # app/config/config.yml
+    fos_js_routing:
+        routes_to_expose: [ en__RG__route_1, en__RG__route_2, ... ]
+
+.. code-block:: yaml
+
+    # app/config/config.yml
+    fos_js_routing:
+        routes_to_expose: [ '[a-z]{2}__RG__route_1', '[a-z]{2}__RG__route_2', ... ]
+
+Note that `Symfony 4.1 added support for internationalized routes`_ out-of-the-box.
+
 You can prevent to expose a route by configuring it as below:
 
 .. code-block:: yaml
@@ -151,3 +197,6 @@ You can enable HTTP caching as below:
             smaxage: null   # integer value, e.g. 300
             expires: null   # anything that can be fed to "new \DateTime($expires)", e.g. "5 minutes"
             vary: []        # string or array, e.g. "Cookie" or [ Cookie, Accept ]
+
+.. _`JMSI18nRoutingBundle`: https://github.com/schmittjoh/JMSI18nRoutingBundle
+.. _`Symfony 4.1 added support for internationalized routes`: https://symfony.com/blog/new-in-symfony-4-1-internationalized-routing
